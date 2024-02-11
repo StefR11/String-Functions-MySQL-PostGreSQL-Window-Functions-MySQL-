@@ -1,0 +1,127 @@
+-- WINDOW FUNCTIONS PERFORM AGGREGATE OPERATIONS AND PRODUCE A RESULT FOR EACH ROW OF THE TABLE 
+CREATE DATABASE WINDOW_FUNCTIONS
+
+CREATE TABLE EMPLOYEES (
+    EMP_NO INT PRIMARY KEY AUTO_INCREMENT,
+    DEPARTMENT VARCHAR(20),
+    SALARY INT
+)
+INSERT INTO EMPLOYEES (DEPARTMENT, SALARY) VALUES
+('ENGINEERING', 80000),
+('engineering', 69000),
+('engineering', 70000),
+('engineering', 103000),
+('engineering', 67000),
+('engineering', 89000),
+('engineering', 91000),
+('sales', 59000),
+('sales', 70000),
+('sales', 159000),
+('sales', 72000),
+('sales', 60000),
+('sales', 61000),
+('sales', 61000),
+('customer service', 38000),
+('customer service', 45000),
+('customer service', 61000),
+('customer service', 40000),
+('customer service', 31000),
+('customer service', 56000),
+('customer service', 55000);
+use window_functions
+
+-- OVER() CLAUSE
+select emp_no, department, salary, AVG(salary) OVER() AS company_AVG_salary from employees
+
+select emp_no, department, salary, 
+MIN(salary) OVER() AS company_minimum_salary,
+MAX(salary) OVER() AS company_maximum_salary
+from employees
+
+-- INSIDE OF THE OVER(), USE PARTITION BY TO FORM ROWS INTO GROUP OF ROW
+-- Calculate the AVG, MIN and MAX salary for each department, I use OVER(PARTITION BY TO PRODUCE A RESULT FOR EACH ROW OF THE TABLE
+select emp_no, department, salary,
+AVG(salary) OVER(PARTITION BY department) AS dept_AVG_salary,
+AVG(salary) OVER() AS company_salary_AVG,
+MIN(salary) OVER(PARTITION BY department) AS dept_MIN_salary,
+MIN(salary) OVER() AS company_MIN_salary,
+MAX(salary) OVER(PARTITION BY department) AS dept_MAX_salary,
+MAX(salary) OVER() AS company_MAX_salary
+FROM employees
+-- I could have used a simple GROUP BY, and I would have gotten only 3 rows, that is the number of departments in the company
+select department, ROUND(AVG(salary),2) AS rounded_AVG_salary from employees
+group by department
+-- How many employees are in each department (in this case I notice that there are 7 employees for each dept)
+select emp_no, department, salary,
+COUNT(emp_no) OVER(PARTITION BY department) AS total_number_of_employees_in_each_department,
+COUNT(emp_no) OVER() AS company_total_number_of_employees
+FROM employees
+
+-- Let's sum up the payroll for each department
+select emp_no, department, salary,
+SUM(salary) OVER() AS company_total_payroll,
+SUM(salary) OVER(PARTITION BY department) AS total_payroll_in_each_department
+FROM employees
+
+-- Use ORDER BY inside the OVER() clause to re-order rows within each window. If ORDER BY is used with an AGGREGATE FUNCTION + OVER(
+-- PARTITION BY, it gives the ROLLING AVG, ROLLING SUM, ROLLING MIN...
+select emp_no, department, salary,
+SUM(salary) OVER(PARTITION BY department ORDER BY salary DESC) AS rolling_dept_salary,
+SUM(salary) OVER(PARTITION BY department) AS total_department_salary
+FROM employees
+-- ORDERING IS MORE IMPORTANT WITH RANKING which is not the same as ROW_NUMBER. The latter will just give a consecutive number of rows
+-- starting at one and going sequentially 
+-- RANK the salary in the company
+select emp_no,
+department,
+salary,
+RANK() OVER(ORDER BY salary DESC) AS overall_salary_rank
+from employees
+-- Rank the salary by departments, calculate the department salary rank for each row of the table
+select emp_no, department, salary,
+RANK() OVER(ORDER BY salary DESC) AS overall_salary_ranking,
+RANK() OVER(PARTITION BY department ORDER BY salary DESC) AS dept_salary_ranking
+from employees
+
+-- Rank the salary by each department and return the third highest salary in the engineering dptm
+WITH CTE AS (select emp_no, department, salary,
+RANK() OVER(PARTITION BY department ORDER BY salary DESC) AS department_salary_ranking
+from employees
+)
+
+select emp_no, department, salary from CTE
+where (department_salary_ranking = 3) AND (department = 'Engineering')
+
+-- ROW_NUMBER 
+select emp_no, department, salary,
+ROW_NUMBER() OVER(PARTITION BY department ORDER BY salary DESC) AS dept_row_number,
+RANK() OVER(PARTITION BY department ORDER BY salary DESC) AS salary_per_department_ranked,
+RANK() OVER(ORDER BY salary DESC) AS overall_salary_ranked
+from employees
+order by department
+
+-- WHICH ITEM WAS PURCHASED FIRST BY THE CUSTOMER AFTER THEY BECAME A MEMBER?
+WITH CTE AS (select mem.customer_id, s.order_date, m.product_name, mem.join_date,
+ROW_NUMBER() OVER(PARTITION BY mem.customer_id ORDER BY order_date ASC) AS sequence,
+RANK() OVER(PARTITION BY mem.customer_id ORDER BY order_date ASC) AS ranking
+from menu as m
+inner join sales as s on m.product_id = s.product_id
+inner join members as mem on mem.customer_id = s.customer_id
+where s.order_date >= mem.join_date)
+select product_name, customer_id from CTE
+where sequence = 1
+
+-- What is the total items and amount spent for each member before they became a member?
+select s.order_date, mem.customer_id, mem.join_date, s.product_id, m.price,
+	COUNT(s.product_id) OVER(PARTITION BY mem.customer_id) AS total_items_for_each_member,
+    SUM(m.price) OVER(PARTITION BY mem.customer_id) AS total_amount_for_each_member
+from menu as m
+inner join sales as s on m.product_id = s.product_id
+inner join members as mem on mem.customer_id = s.customer_id
+where s.order_date < mem.join_date
+
+
+
+
+
+
