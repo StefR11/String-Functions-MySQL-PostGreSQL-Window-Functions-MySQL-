@@ -1,0 +1,72 @@
+create table books(
+	book_id integer auto_increment,
+    title varchar(100),
+    author_fname varchar(100),
+    author_lname varchar(100),
+    released_year INTEGER,
+    stock_quantity INTEGER,
+    pages INTEGER,
+    PRIMARY KEY (book_id)
+)
+describe books
+INSERT INTO books (title, author_fname, author_lname, released_year, stock_quantity, pages)
+VALUES
+('The Namesake', 'Jhumpa', 'Lahiri', 2003, 32, 291),
+('Norse Mythology', 'Neil', 'Gaiman',2016, 43, 304),
+('American Gods', 'Neil', 'Gaiman', 2001, 12, 465),
+('Interpreter of Maladies', 'Jhumpa', 'Lahiri', 1996, 97, 198),
+('A Hologram for the King: A Novel', 'Dave', 'Eggers', 2012, 154, 352),
+('The Circle', 'Dave', 'Eggers', 2013, 26, 504),
+('The Amazing Adventures of Kavalier & Clay', 'Michael', 'Chabon', 2000, 68, 634),
+('Just Kids', 'Patti', 'Smith', 2010, 55, 304),
+('A Heartbreaking Work of Staggering Genius', 'Dave', 'Eggers', 2001, 104, 437),
+('Coraline', 'Neil', 'Gaiman', 2003, 100, 208),
+('What We Talk About When We Talk About Love: Stories', 'Raymond', 'Carver', 1981, 23, 176),
+("Where I'm Calling From: Selected Stories", 'Raymond', 'Carver', 1989, 12, 526),
+('White Noise', 'Don', 'DeLillo', 1985, 49, 320),
+('Cannery Row', 'John', 'Steinbeck', 1945, 95, 181),
+('Oblivion: Stories', 'David', 'Foster Wallace', 2004, 172, 329),
+('Consider the Lobster', 'David', 'Foster Wallace', 2005, 92, 343);
+
+-- CONCAT FUNCTION
+-- SELECT CONCAT(author_fname, ' ', author_lname) AS full_author_name FROM books
+-- SELECT CONCAT_WS(' ', author_fname, author_lname) AS full_author_name FROM books
+-- SELECT CONCAT_WS('-', author_fname, author_lname) AS full_author_name FROM books
+describe books
+-- CONCAT AND SUBSTRING FUNCTION
+USE book_shop_string_functions
+select * from books
+-- 1.  GET THE INITIALS OF THE AUTHORS COMBINED IN ONE COLUMN
+select CONCAT(SUBSTRING(author_fname, 1, 1), '.', SUBSTRING(author_lname, 1, 1), '.') AS author_F_N FROM books
+
+-- CHAR_LENGTH FUNCTION counts the characters in a column value 
+-- SELECT author_lname, CHAR_LENGTH(author_lname) AS 'length' FROM books
+
+-- REPLACE FUNCTION replaces a certain part of a column value 
+-- SELECT REPLACE(title, 'e', '3') FROM books
+-- SELECT REPLACE(title, ' ', '-') FROM books
+
+-- LOWER and UPPER FUNCTIONS
+-- select LOWER(RIGHT(author_lname, 3)) from books
+
+-- SUBSTRING_INDEX FUNTCION IN MYSQL SPLIT THE STRINGS. SPLIT_PART is instead used in PosteGre SQL
+-- SELECT SUBSTRING_INDEX(title, ' ', 1) from books
+
+-- 1. Reverse and Uppercase the following sentence "Why does my cat look at me with such hatred?"
+-- SELECT REVERSE(UPPER('Why does my cat look at me with such hatred?'))
+
+-- 2. Replace spaces in the title column with '->'
+SELECT REPLACE(title, ' ', '->') AS spaces_replaced FROM books
+
+-- 3. Get the full name capitalised of the authors 
+SELECT CONCAT_WS(' ', UPPER(author_fname), UPPER(author_lname)) AS author_FN FROM books
+SELECT UPPER(CONCAT(author_fname, ' ', author_lname)) AS author_FN FROM books
+
+-- 4. Make this happen
+SELECT CONCAT(SUBSTRING(title, 1, 10), '...') AS short_title,
+CONCAT_WS(', ', author_lname, author_fname) AS author_FN,
+CONCAT(stock_quantity, ' ', 'in', ' ', 'stock') AS quantity_in_stock
+FROM books 
+
+
+
